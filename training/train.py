@@ -10,36 +10,40 @@ def feat(d, sw, truth, trunc, pw=1.0):
 
 config = {
     "window_step_ms": 10,
-    "train_dir": "trained_models/computah",
+    "train_dir": "trained_models/computah-v2",
     "features": [
-        feat("features_pos", 2.0, True, "truncate_start"),
-        feat("features_neg", 4.0, False, "truncate_start"),
+        feat("v2/features_pos", 2.0, True, "truncate_start"),
+        feat("v2/features_neg", 4.0, False, "truncate_start"),
+        feat("v2/features_librispeech", 10.0, False, "random"),
         feat("negative_datasets/speech", 10.0, False, "random"),
         feat("negative_datasets/dinner_party", 10.0, False, "random"),
         feat("negative_datasets/no_speech", 5.0, False, "random"),
         feat("eval_small", 0.0, False, "split"),
     ],
-    "training_steps": [10000],
-    "positive_class_weight": [1],
-    "negative_class_weight": [20],
-    "learning_rates": [0.001],
+    # Two phases: 20k steps, then 10k at a fifth of the learning rate.
+    "training_steps": [20000, 10000],
+    "positive_class_weight": [1, 1],
+    "negative_class_weight": [20, 20],
+    "learning_rates": [0.001, 0.0002],
     "batch_size": 128,
-    "time_mask_max_size": [0],
-    "time_mask_count": [0],
-    "freq_mask_max_size": [0],
-    "freq_mask_count": [0],
+    # SpecAugment: up to 2 masks of up to 5 frames in time and 5 bins in
+    # frequency (microWakeWord's own defaults when unset).
+    "time_mask_max_size": [5, 5],
+    "time_mask_count": [2, 2],
+    "freq_mask_max_size": [5, 5],
+    "freq_mask_count": [2, 2],
     "eval_step_interval": 500,
     "clip_duration_ms": 1500,
     "target_minimization": 0.9,
     "minimization_metric": None,
     "maximization_metric": "average_viable_recall",
 }
-with open("training_parameters.yaml", "w") as f:
+with open("v2/training_parameters.yaml", "w") as f:
     yaml.dump(config, f)
 
 subprocess.run([
     "python", "-m", "microwakeword.model_train_eval",
-    "--training_config=training_parameters.yaml",
+    "--training_config=v2/training_parameters.yaml",
     "--train", "1", "--restore_checkpoint", "1",
     "--test_tf_nonstreaming", "0", "--test_tflite_nonstreaming", "0",
     "--test_tflite_nonstreaming_quantized", "0", "--test_tflite_streaming", "0",
