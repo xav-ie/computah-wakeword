@@ -20,6 +20,20 @@ linux-voice-assistant and other Wyoming satellites.
 | `model/computah.tflite` | The streaming, quantized model (61 KB) |
 | `model/computah.json` | Its manifest: cutoff 0.94, 10 ms feature step, window of 5 |
 
+## Using it
+
+Put both files in one folder and point the satellite at it, for example
+linux-voice-assistant:
+
+```sh
+linux-voice-assistant --wake-word-dir ./model --wake-model computah
+```
+
+Keep the manifest and the model named alike (`computah.json` and
+`computah.tflite`). The satellite names the wake word after the manifest and
+the loaded model after the file the manifest points to; when the two differ,
+it drops the model without a word and never wakes.
+
 ## How well it works
 
 Measured by microWakeWord's streaming test on held-out synthetic clips (misses)
@@ -36,8 +50,8 @@ Raise `probability_cutoff` in the manifest for fewer false wakes, lower it for
 fewer misses.
 
 **Limits:** every positive example is a synthetic voice (Piper, LibriTTS-R
-speakers), English only. Real voices, accents and far-field rooms are not
-measured here.
+speakers), English only. On one real speaker it caught each of four tries at
+a desk microphone; accents and far-field rooms are not measured.
 
 ## How it was trained
 
