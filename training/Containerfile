@@ -1,0 +1,10 @@
+# The image the model was trained in: TensorFlow 2.19 on CUDA, and every
+# Python package at the version it ran (requirements.lock, pip freeze of
+# that image).
+FROM docker.io/tensorflow/tensorflow@sha256:73fe35b67dad5fa5ab0824ed7efeb586820317566a705dff76142f8949ffcaff
+RUN apt-get update && apt-get install -y --no-install-recommends git wget unzip ffmpeg && rm -rf /var/lib/apt/lists/*
+COPY requirements.lock /tmp/requirements.lock
+RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cu124 -r /tmp/requirements.lock \
+ && pip install --no-cache-dir 'git+https://github.com/whatsnowplaying/audio-metadata@d4ebb238e6a401bb1a5aaaac60c9e2b3cb30929f'
+ENV TF_FORCE_GPU_ALLOW_GROWTH=true PYTHONUNBUFFERED=1
+WORKDIR /work
