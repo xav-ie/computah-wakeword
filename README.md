@@ -1,4 +1,5 @@
 ---
+license: cc-by-4.0
 language: en
 tags:
   - microwakeword
@@ -78,3 +79,10 @@ Everything is pinned (base image digest, every Python package, the
 microWakeWord and piper-sample-generator commits, each dataset's revision),
 but a retrain gives an equivalent model, not the same bytes: sample
 generation, augmentation and GPU training are random.
+
+## License
+
+The model and its manifest are [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/):
+use them anywhere, crediting "Computah wake word by xav-ie". Its training voices
+come from LibriTTS-R through Piper (CC BY 4.0), its negatives from
+microWakeWord's datasets and FMA, each under its own license.
