@@ -1,0 +1,12 @@
+# The microWakeWord training image (../Containerfile) plus openWakeWord 0.6.0
+# and what its trainer imports, at the versions the model was trained with.
+FROM localhost/computah-train:latest
+RUN apt-get update && apt-get install -y --no-install-recommends espeak-ng && rm -rf /var/lib/apt/lists/*
+RUN pip install --no-cache-dir openwakeword==0.6.0 onnxruntime==1.20.1 \
+    speechbrain==0.5.14 torchinfo==1.8.0 torchmetrics==1.6.0 torch-audiomentations==0.11.1 \
+    acoustics==0.2.6 mutagen==1.47.0 pronouncing==0.2.0 scipy==1.14.1 onnx==1.17.0 \
+    transformers==4.46.3 librosa==0.10.2.post1 protobuf==5.28.3 phonemizer==3.3.0
+# The false-wake validation set (2.8 GB once windowed) went to the GPU in one
+# batch; check it in batches so training fits an 8 GB GPU.
+RUN sed -i '872s/batch_size=len(X_val_fp_labels)/batch_size=65536/' /usr/local/lib/python3.11/dist-packages/openwakeword/train.py \
+ && sed -n 872p /usr/local/lib/python3.11/dist-packages/openwakeword/train.py | grep -q "batch_size=65536"

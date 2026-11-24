@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# What the openWakeWord model needs on top of ../download.sh: openWakeWord's
+# precomputed negative features and the 24 Piper voice models positives and
+# sound-alikes come from, each at a fixed revision and checked by hash.
+set -euo pipefail
+cd "$(dirname "$0")/../.."
+mkdir -p data/oww data/train_voices
+cd data
+get() { # url file sha256
+  if [ ! -s "$2" ] || ! echo "$3  $2" | sha256sum -c --quiet - 2>/dev/null; then
+    curl -fL --retry 5 -o "$2.part" "$1"
+    echo "$3  $2.part" | sha256sum -c --quiet -
+    mv -f "$2.part" "$2"
+  fi
+}
+# 2,000 hours of ACAV100M as openWakeWord features (17 GB), the general
+# negatives, and the 11 hours it validates false wakes on.
+OWW=https://huggingface.co/datasets/davidscripka/openwakeword_features/resolve/985bf1b47e7f19c07741af82bfe32d5a9dc56096
+get $OWW/openwakeword_features_ACAV100M_2000_hrs_16bit.npy oww/acav100m_2000h.npy 721a66d0682c65a1b5c1da0aa109409cede1d20e28b15235c344b000cbb7654f
+get $OWW/validation_set_features.npy oww/validation_set_features.npy a56a8a0f8e0efb91900acc6de4c0cdf4c564842e8475a7d49b36c039e17a690f
+
+VOICES=https://huggingface.co/rhasspy/piper-voices/resolve/e5349433ed883a32f893a434dc43a6c66b95ef7c/en
+while read -r path sha sha_json; do
+  name=$(basename "$path")
+  get "$VOICES/$path.onnx" "train_voices/$name.onnx" "$sha"
+  get "$VOICES/$path.onnx.json" "train_voices/$name.onnx.json" "$sha_json"
+done <<'LIST'
+en_GB/alba/medium/en_GB-alba-medium 1f9da809b6da1ef4190bb5dd6cce4f4af803274539e9cf9e0693085150bac3d7 ed4b1f015a8aae5eb26d4bdeed7b712c660f5698a0dd954aa6df9c8be60b900b
+en_GB/aru/medium/en_GB-aru-medium cbdeeec713222dc17fb8f52212b62b30b8ddbaa521a6781022ed86a4a136e5bc 3575c270d9bc0f8b3fe4e9a0190eef03492a4f35d4dffe5f1cbd0de258b6f3c8
+en_GB/cori/medium/en_GB-cori-medium 2e0a55e140de672aa19b182602b407607bd2e6c35fc6020c0b1516053c02e995 7204f5ead17759278419129290e51ebb414f09f7ac6cd0e567532592956bbbac
+en_GB/northern_english_male/medium/en_GB-northern_english_male-medium 41199d55776c142c151e018cf77bea80ca5f01b7b834f81cd781df5b751bf2fb 0159d481609238e47e31114496d004b86d7b49d1f95a81adfb6e5ff758d99013
+en_GB/semaine/medium/en_GB-semaine-medium d6dab6f3b92db43ea3f78c7f20dc8eadb47a1f15d8a1c9d451cf3ccd201a2f66 6425dcb878684043b77d772b173ae006d86a583b110303edda48b8438ecee5ee
+en_GB/southern_english_female/low/en_GB-southern_english_female-low f2f37aed1b3a093476f719d1379ba0c0b1b1cf6f1ef99288e2ebf502971a07c3 a1af43310f8756161506e849a2863d342a98b0853af9e2437581d39e9922d0e5
+en_GB/vctk/medium/en_GB-vctk-medium fc3d92d266b1a6c03af2a38215e0eee430ca7fb360f641d7c3dcb17c7670c0f3 8cc5a7678bf893c35cb6fde5d0812fb7e2b63e1eef54db250afd525277471f2d
+en_US/arctic/medium/en_US-arctic-medium 483303e294947a3ec2f910ea96093d876e1640f5772e9d89e511d6c82c667286 db2ca1a55db01cdd3ce28ae63037ac525133e9e00ca557430dec572643235efe
+en_US/bryce/medium/en_US-bryce-medium dc9caa6c313199ffb5ac698b6e542fa6cba388aeaf2731e25262e33b9810aef1 7ceb1bc4af6d4e41b6d1edbb86c67e91e01eaa71f66db4cd0ae92ac704d415be
+en_US/danny/low/en_US-danny-low 56a9ae9499e961514f060aac2866cb323a21e5989592fc4f208e56fdc323ab64 191dea1ba9863199d8ca2e9048f83b219219fb450f62767ee02f1bc4568ce4f4
+en_US/hfc_female/medium/en_US-hfc_female-medium 5b3d6e36a33a1eb0e50b54900c229127e3059400885eb5e8f128ff04b31cd73c 8c7ed7408e7a37602ad6aff4785f44ecb69616b0153ec6a23e920713eba51fac
+en_US/hfc_male/medium/en_US-hfc_male-medium d11e403a02bdf5a670c877b3dc56e0e1c8cece6fb30289586314dffdc0a78cb0 f66847424aed0bf99ecbb5d7cfde47c0a906f426a0daf7c46f305e7d21afd886
+en_US/hifi_tts_92/medium/en_US-hifi_tts_92-medium 14d19c09e5b08c9416ef856fd669118f91813b0772714e3d989adbd70f05ff91 e593b75cb2795f02e3094831754746d1a9a5abfeb1f05f948c8d1753874e288b
+en_US/joe/medium/en_US-joe-medium abf4b998e34045cbd00eaf050de2de620f81ded6eb8b85a24b022a1c2b3f08d2 9b91a652090ffa8a49e36569afa9acc8ead2b3a22a950e8e6ca11914f3e85d56
+en_US/john/medium/en_US-john-medium 789c6c875726e627ddee93d51d8727859abe9c091c3d141591f4b83c2072e988 af60f177b6b550f3d7a302720c0fb89e7f94a82b5dca464775ef63b1c69ba09a
+en_US/kathleen/medium/en_US-kathleen-medium 173115e17ff8efb7aa895a4957fb0bccf7c6d9048d82f8c5821902a68f959cc3 9cb87b28715abfe6d73a70df52283fe29849950ecce74d2c36556db91d93c124
+en_US/kristin/medium/en_US-kristin-medium 5849957f929cbf720c258f8458692d6103fff2f0e3d3b19c8259474bb06a18d4 5681426d4aead22195de70531eeeeddb46493cfaffc5764b2ea3db73428b651c
+en_US/kusal/medium/en_US-kusal-medium 438ae25bb305b2a7f6d632327d6102df25011f793e8222fa9db876e7321df8f3 ddd3c4dfd8b4f568150c934fb94912dd788d44db87f4f0a328c469d7a6761f41
+en_US/l2arctic/medium/en_US-l2arctic-medium d89f6f124bf1e7735b2179d2141b8001c3e19169d5e743ed6e35624f4c76f044 a97e2ba653e9efcdc1bdcec64a398c8beb19ae5e8dfdbfe4ad6841983e56c07c
+en_US/ljspeech/medium/en_US-ljspeech-medium 6f52a751e2349abe7a76735eb09dc1875298c77ea2342ffd2fef79ff81b87f22 141d612cc0a95ed7efc1ca936b845c2364967f2e9217c5dbfcf69fc4d6c65860
+en_US/mike/medium/en_US-mike-medium 6876866e3dfadc7f044bc5e4fbac16c47b5a1e79eaec04e3bb0c2c6e9da8a857 8c6e040667a91624501e4b30c460ef389ad3c995164788c89dd9522151ecbc4c
+en_US/norman/medium/en_US-norman-medium b9739443232a80a59c7d18810dd856899bf16a7964725f5ab81ea49b1351cb71 6c2db7f558a4a8deb9fe822583c1c5105f6c4e834dd0f9de8ad17a888ee9fe1d
+en_US/reza_ibrahim/medium/en_US-reza_ibrahim-medium 99f0c31464a2120831ca87d079e10a9a2b3e426cc1ee662d80ff9042df15cd3c 465ddf1702917fe617b7d69ed81301d6a2f39f083a754bd1cf6db8955d09a381
+en_US/sam/medium/en_US-sam-medium c89f55564302e0d0e7e5baa0f45ab21d932018a334cfe6622abe46cc5713ac00 d46b4a474fbb49e74818f90c1439d453e5203e0306ef6ed6d17319bc03b89cac
+LIST

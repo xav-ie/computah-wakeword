@@ -1,16 +1,12 @@
 {
-  "type": "micro",
+  "type": "openWakeWord",
   "wake_word": "Computah",
   "model": "computah.tflite",
   "trained_languages": [
     "en"
   ],
-  "version": 2,
-  "micro": {
-    "probability_cutoff": 0.6,
-    "feature_step_size": 10,
-    "sliding_window_size": 5,
-    "tensor_arena_size": 30000,
-    "minimum_esphome_version": "2024.7.0"
+  "version": 3,
+  "openWakeWord": {
+    "probability_cutoff": 0.9
   }
 }

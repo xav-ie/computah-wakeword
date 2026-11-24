@@ -1,0 +1,20 @@
+training/benchmark.py: false wakes over LibriSpeech test-clean (5.40 h of read
+speech, one continuous stream, 2 s refractory); catches over 60 held-out clips
+of "computah" from five Piper voices training never uses (heldout.sh).
+
+Computah v2 (this model)
+  @0.5   4.81 false wakes/h (26)   caught 58/60
+  @0.6   4.07 false wakes/h (22)   caught 57/60   (shipped cutoff)
+  @0.7   3.33 false wakes/h (18)   caught 55/60
+  @0.8   2.96 false wakes/h (16)   caught 52/60
+  @0.9   1.85 false wakes/h (10)   caught 48/60
+  @0.94  1.48 false wakes/h (8)    caught 45/60
+  @0.97  0.93 false wakes/h (5)    caught 42/60
+
+Computah v1
+  @0.94  8.33 false wakes/h (45)   caught 56/60   (its shipped cutoff)
+  @0.97  5.92 false wakes/h (32)
+  @0.99  1.67 false wakes/h (9)
+
+openWakeWord "computer" (home-assistant-wakewords-collection computer_v2)
+  @0.7   0.93 false wakes/h (5)    caught 57/60

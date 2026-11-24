@@ -1,28 +1,28 @@
 ---
-license: cc-by-4.0
+license: cc-by-nc-sa-4.0
 language: en
 tags:
-  - microwakeword
+  - openwakeword
   - wake-word
-  - esphome
   - home-assistant
   - tflite
 ---
 
 # Computah wake word
 
-A [microWakeWord](https://github.com/kahrendt/microWakeWord) model that wakes
-on "Computah" (computer, said with the r dropped). It runs anywhere
-microWakeWord models do: ESPHome voice devices, Home Assistant's
-linux-voice-assistant and other Wyoming satellites.
+An [openWakeWord](https://github.com/dscripka/openWakeWord) model that wakes
+on "Computah": computer said the American way with the r dropped,
+com-pew-TAH. It runs anywhere openWakeWord models do: Home Assistant's
+linux-voice-assistant, Wyoming satellites and openWakeWord itself.
 
 | File | What |
 |---|---|
-| `model/computah.tflite` | The streaming, quantized model (61 KB) |
-| `model/computah.json` | Its manifest: cutoff 0.6, 10 ms feature step, window of 5 |
+| `model/computah.tflite` | The model (208 KB); openWakeWord's built-in melspectrogram and embedding models feed it |
+| `model/computah.json` | Its manifest: openWakeWord, cutoff 0.9 |
 
-This is version 2. Version 1 (cutoff 0.94) is in the history; v2 halves its
-false wakes on speech and catches as much.
+This is version 3. Versions 1 and 2, microWakeWord models, are in the
+history. Over 18.7 hours of far-field audio v3 woke falsely once, where v1
+woke 83 times and v2 118, and it does not wake on "computer".
 
 ## Using it
 
@@ -40,70 +40,85 @@ it drops the model without a word and never wakes.
 
 ## How well it works
 
-`training/benchmark.py` runs a model the way a satellite does over 5.4 hours
-of read speech (LibriSpeech test-clean, speakers training never hears) for
-false wakes, and over 60 clips of "computah" from five Piper voices training
-never uses (American and British) for catches. `results/benchmark.txt`:
+`training/benchmark.py` runs a model the way a satellite does. False wakes
+come from three sets, each played as one continuous stream: read speech
+close to the microphone (LibriSpeech test-clean, 5.4 h), meetings from one
+distant microphone (AMI SDM test, 8.9 h) and noisy found audio (People's
+Speech dirty, 9.8 h). Catches come from 106 clips of "computah" and
+"hey computah" by five Piper voices training never uses. `results/benchmark.txt`:
 
-| Model | Cutoff | False wakes per hour | Caught |
-|---|---|---|---|
-| **Computah v2** | **0.6** (shipped) | **4.07** | **57/60** |
-| Computah v2 | 0.8 | 2.96 | 52/60 |
-| Computah v2 | 0.97 | 0.93 | 42/60 |
-| Computah v1 | 0.94 | 8.33 | 56/60 |
-| openWakeWord "computer" (community) | 0.7 | 0.93 | 57/60 |
+| Model | Cutoff | LibriSpeech | AMI meetings | People's Speech | Caught |
+|---|---|---|---|---|---|
+| **Computah v3** | **0.9** (shipped) | **0.00/h** | **0.11/h** | **0.00/h** | **105/106** |
+| Computah v3 | 0.5 | 0.19/h | 0.45/h | 0.41/h | 106/106 |
+| Computah v2 (microWakeWord) | 0.6 | 4.07/h | 10.12/h | 2.86/h | 106/106 |
+| Computah v1 (microWakeWord) | 0.94 | 8.33/h | 4.72/h | 4.19/h | 106/106 |
+| openWakeWord "computer" (community) | 0.7 | 0.93/h | 1.91/h | 1.43/h | 100/106 |
 
-Raise `probability_cutoff` in the manifest for fewer false wakes, lower it for
-fewer misses. Read speech close to the microphone is the hard case; on the
-far-field `dinner_party_eval` microWakeWord tests with
-(`results/tflite_streaming_roc.txt`) v2 reaches 0.56 false wakes an hour with
-13% misses at cutoff 0.91.
+"computer" said by the three American held-out voices wakes v3 on 0 of 12
+clips and the "computer" model on 11.
 
-**Limits:** every positive example is a synthetic voice (two Piper LibriTTS
-generators), English only. Accents beyond American and British, real voices
-and far-field rooms are not benchmarked.
+Lower `probability_cutoff` in the manifest if it misses you; down to 0.5 it
+still wakes falsely less than once an hour on every set.
+
+**Limits:** every positive example is a synthetic voice, English only, and
+the held-out clips pass the same pronunciation screen as the training clips.
+Real voices and accents beyond American and British are not benchmarked.
 
 ## How it was trained
 
-- **Positives:** 25,200 Piper clips of "computah", four respellings and
-  "hey computah" / "okay computah", half from each of two generators
-  (`en_US-libritts_r-medium`, `en-us-libritts-high`), speakers blended and
-  speed and voice noise varied, `training/generate.sh`.
-- **Sound-alikes:** 24,800 clips of 40 near-misses from the same two
-  generators in the same mix ("computer", "commuter", "compu", "puter",
-  "cappuccino", …). With every clip from one generator, v1 learned the
-  generator's sound as much as the word.
-- **Augmentation:** room impulse responses (MIT, probability 0.7),
-  background music (FMA xsmall), EQ, distortion, pitch, noise and gain,
-  `training/prep.py`.
-- **Negative sets:** microWakeWord's `speech`, `dinner_party` and
-  `no_speech`, and LibriSpeech dev-clean as plain speech. Speech belongs among
-  the negatives: a trial run that instead mixed it under the positives as
-  background learned that speech means "computah".
-- **Model:** microWakeWord's MixedNet, 20,000 steps then 10,000 at a fifth of
-  the learning rate, with time and frequency masking (5/2/5/2),
-  `training/train.py` (parameters in `results/training_parameters.yaml`).
+The fix that mattered was in the data. Spelled "computah" ("computah",
+"computa", "kum pew tah"), as v1 and v2 were trained, came out of most
+synthetic voices as "computer"; a listening check found that a fifth of v2's
+held-out clips said "computer" too. v3's positives come from phonemes
+instead, and every clip is screened before training sees it.
+
+- **Positives:** 105,000 candidates of "computah" and "hey computah" from
+  exact phonemes (stress on TAH, or on PEW with an open "ah"), from both
+  Piper LibriTTS generators (904 speakers, blended) and 24 Piper voice models
+  (186 speakers), each faded and padded so no voice ends in a click
+  (`training/openwakeword/positives.py`).
+- **Screening:** a wav2vec2 phoneme recognizer transcribes every candidate
+  (`phonescore.py`), and only clips heard as com-pew-tah with no r at the
+  end are kept (`phonejudge.py`, `select.py`): 21,335 of them, at most 600
+  per voice model. On clips a person had labelled, it rejected every one
+  they called bad.
+- **Sound-alikes:** 24,800 clips of 40 near-misses from the LibriTTS
+  generators (`training/generate.sh`) and 14,400 of 29 from the 24 voice
+  models (`negatives_voices.py`). The voice models leave out "computer" and
+  "compute a": through them they sounded like "computah" and taught the model
+  to reject the wake word.
+- **General negatives:** openWakeWord's 2,000 hours of ACAV100M features.
+- **Augmentation and model:** openWakeWord's own (room impulse responses,
+  background music, noise, EQ; a 32-unit DNN over its speech embeddings),
+  50,000 steps (`training/openwakeword/computah.yml`).
 
 ## Training it again
 
-Needs an NVIDIA GPU, podman with CDI and about 100 GB of disk.
+Needs an NVIDIA GPU with 8 GB, podman with CDI and about 150 GB of disk.
 
 ```sh
-training/download.sh   # pinned sources, each checked by SHA-256
-training/pipeline.sh   # samples, features, model, held-out clips
-training/benchmark.py --negatives data/librispeech_test_16k --positives data/heldout_pos \
-  --micro model/computah.json
+training/download.sh                # pinned sources, each checked by SHA-256
+training/openwakeword/download.sh   # openWakeWord's features and 24 voice models
+training/openwakeword/pipeline.sh   # sound-alikes, candidates, screening, model
+training/farfield.sh                # the AMI and People's Speech benchmark sets
+training/benchmark.py --negatives data/media/ami_sdm --positives data/heldout_phonemes \
+  --openwakeword data/oww/computah.tflite 0.9
 ```
 
-Everything is pinned (base image digest, every Python package, the
-microWakeWord and piper-sample-generator commits, each dataset's revision),
-but a retrain gives an equivalent model, not the same bytes: sample
-generation, augmentation and GPU training are random.
+Everything is pinned (base image, Python packages, repository commits, each
+dataset's and model's revision), but a retrain gives an equivalent model,
+not the same bytes: generation, augmentation and training are random.
+`training/pipeline.sh` and the files beside it train v2, the microWakeWord
+model.
 
 ## License
 
-The model and its manifest are [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/):
-use them anywhere, crediting "Computah wake word by xav-ie". Its training voices
-come from LibriTTS and LibriTTS-R through Piper (CC BY 4.0), its negatives
-from microWakeWord's datasets, LibriSpeech (CC BY 4.0) and FMA, each under its
-own license.
+The model and its manifest are [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/),
+credited "Computah wake word by xav-ie": its general negatives
+(openWakeWord's ACAV100M features) and 4 of its 24 voice models (semaine,
+hfc_female, hfc_male, l2arctic) are non-commercial, so the model is too, as
+openWakeWord's own models are. Versions 1 and 2 in the history remain
+CC BY 4.0. The other sources (LibriTTS and LibriTTS-R through Piper,
+LibriSpeech, AMI, People's Speech, FMA, the other voice models) are each
+under their own license.
