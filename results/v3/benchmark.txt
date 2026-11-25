@@ -1,0 +1,28 @@
+training/benchmark.py: false wakes per hour over three negative sets, each
+played as one continuous stream with a 2 s refractory period:
+  LibriSpeech test-clean   5.4 h of read speech, close microphone
+  AMI SDM test             8.9 h of meetings, one distant microphone
+  People's Speech dirty    9.8 h of noisy found audio (2 of 11 test shards)
+Catches: 106 held-out clips of "computah" and "hey computah" from five Piper
+voices training never uses (2 British, 3 American), made from phonemes and
+screened like the training clips (training/openwakeword).
+
+Computah v3 (this model, openWakeWord)
+  cutoff  LibriSpeech     AMI meetings    People's Speech   caught
+  @0.05   0.19/h ( 1)     2.81/h (25)     2.76/h (27)   106/106
+  @0.1    0.19/h ( 1)     1.91/h (17)     1.84/h (18)   106/106
+  @0.2    0.19/h ( 1)     1.35/h (12)     1.02/h (10)   106/106
+  @0.3    0.19/h ( 1)     1.01/h ( 9)     0.72/h ( 7)   106/106
+  @0.5    0.19/h ( 1)     0.45/h ( 4)     0.41/h ( 4)   106/106
+  @0.7    0.19/h ( 1)     0.22/h ( 2)     0.31/h ( 3)   106/106
+  @0.9    0.00/h ( 0)     0.11/h ( 1)     0.00/h ( 0)   105/106   (shipped cutoff)
+
+Earlier models on the same sets (false wakes per hour; catches on the same
+106 clips):
+  model                                   cutoff  LibriSpeech  AMI    People's  caught
+  Computah v2 (microWakeWord)             0.6     4.07         10.12  2.86      106/106
+  Computah v1 (microWakeWord)             0.94    8.33         4.72   4.19      106/106
+  openWakeWord "computer" (community)     0.7     0.93         1.91   1.43      100/106
+
+"computer" said by the three American held-out voices (12 clips): v3 at 0.9
+wakes on 0, the "computer" model at 0.7 on 11.

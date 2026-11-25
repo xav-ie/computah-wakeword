@@ -5,8 +5,8 @@
   "trained_languages": [
     "en"
   ],
-  "version": 3,
+  "version": 4,
   "openWakeWord": {
-    "probability_cutoff": 0.9
+    "probability_cutoff": 0.95
   }
 }

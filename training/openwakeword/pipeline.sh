@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
-# Trains Computah v3, the openWakeWord model, on an NVIDIA GPU. Run
+# Trains Computah v4, the openWakeWord model, on an NVIDIA GPU. Run
 # ../download.sh and ./download.sh first. Writes into ./data; the model lands
 # in data/oww/computah.tflite and the held-out clips in data/heldout_phonemes.
 #
 #   1. Sound-alikes: ../generate.sh (its LibriTTS half; the spelled
 #      positives it also makes are not used) and negatives_voices.py.
 #   2. "computah" candidates from exact phonemes: both LibriTTS generators
-#      and 24 Piper voice models for training, 5 other voices for testing.
+#      and 20 Piper voice models for training, 5 other voices for testing.
 #   3. phonescore.py transcribes every candidate into phonemes and
 #      select.py keeps those phonejudge.py hears as com-pew-tah with no r.
-#   4. openWakeWord augments the clips, computes features and trains;
+#   4. General negatives and the validation set as openWakeWord features,
+#      from MUSAN (its CC BY and public domain part), LibriSpeech and AMI.
+#   5. openWakeWord augments the clips, computes features and trains;
 #      to_tflite.py converts the result.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
@@ -61,7 +63,16 @@ done
 python3 $S/phonescore.py /work/data/cand > /work/data/cand/scores.tsv
 cd $S && python3 select.py /work/data/cand/scores.tsv && cd /work
 
-# 4. Features, training, conversion.
+# 4. General negatives and validation set.
+python3 $S/musan_cc_by.py
+N=/work/data/oww/neg; R=/work/data/oww/src
+mkdir -p $N
+[ -s $N/musan.npy ] || python3 $S/neg_features.py windows $N/musan.npy $R/musan_by
+[ -s $N/librispeech.npy ] || python3 $S/neg_features.py windows $N/librispeech.npy $R/train-clean-100 $R/train-clean-360
+[ -s $N/ami.npy ] || python3 $S/neg_features.py windows $N/ami.npy $R/ami_train/*.parquet
+[ -s $N/validation.npy ] || python3 $S/neg_features.py stream $N/validation.npy $R/dev-clean $R/dev-other
+
+# 5. Features, training, conversion.
 cd /work/data/oww
 python3 -c "import openwakeword.utils as u; u.download_models()"
 python3 -m openwakeword.train --training_config $S/computah.yml --augment_clips --overwrite

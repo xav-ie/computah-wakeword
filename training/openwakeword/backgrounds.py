@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-# The room impulse responses and background music openWakeWord augments
-# with, the same as ../prep.py builds for microWakeWord.
-import json, os, subprocess, urllib.request
+# The room impulse responses openWakeWord augments with, the same as
+# ../prep.py fetches for microWakeWord.
+import json, os, urllib.request
 from pathlib import Path
 os.chdir("/work/data")
 if not Path("mit_rirs").exists():
@@ -13,11 +13,3 @@ if not Path("mit_rirs").exists():
     for f in [f for f in files if f.startswith("16khz/") and f.endswith(".wav")]:
         urllib.request.urlretrieve(f"{repo}/resolve/{rev}/{f}", f"mit_rirs.tmp/{f.split('/')[-1]}")
     os.rename("mit_rirs.tmp", "mit_rirs")
-if not Path("fma_16k").exists():
-    if not Path("fma").exists():
-        subprocess.run(["unzip", "-q", "dl/fma_xs.zip", "-d", "fma"], check=True)
-    Path("fma_16k.tmp").mkdir(exist_ok=True)
-    for mp3 in Path("fma").glob("**/*.mp3"):
-        subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(mp3), "-ac", "1", "-ar", "16000",
-                        f"fma_16k.tmp/{mp3.stem}.wav"], check=False)
-    os.rename("fma_16k.tmp", "fma_16k")

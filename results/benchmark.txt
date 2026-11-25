@@ -6,23 +6,30 @@ played as one continuous stream with a 2 s refractory period:
 Catches: 106 held-out clips of "computah" and "hey computah" from five Piper
 voices training never uses (2 British, 3 American), made from phonemes and
 screened like the training clips (training/openwakeword).
+Harder test (training/openwakeword/hardtest.sh): those 106 clips and 82 from
+four held-out Kokoro voices, each through a real room impulse response and
+into AMI or People's Speech audio at 10, 5 and 0 dB; 564 clips.
 
-Computah v3 (this model, openWakeWord)
-  cutoff  LibriSpeech     AMI meetings    People's Speech   caught
-  @0.05   0.19/h ( 1)     2.81/h (25)     2.76/h (27)   106/106
-  @0.1    0.19/h ( 1)     1.91/h (17)     1.84/h (18)   106/106
-  @0.2    0.19/h ( 1)     1.35/h (12)     1.02/h (10)   106/106
-  @0.3    0.19/h ( 1)     1.01/h ( 9)     0.72/h ( 7)   106/106
-  @0.5    0.19/h ( 1)     0.45/h ( 4)     0.41/h ( 4)   106/106
-  @0.7    0.19/h ( 1)     0.22/h ( 2)     0.31/h ( 3)   106/106
-  @0.9    0.00/h ( 0)     0.11/h ( 1)     0.00/h ( 0)   105/106   (shipped cutoff)
+Training's negatives include other AMI meetings and other LibriSpeech
+speakers, so People's Speech is the set furthest from training.
 
-Earlier models on the same sets (false wakes per hour; catches on the same
-106 clips):
-  model                                   cutoff  LibriSpeech  AMI    People's  caught
-  Computah v2 (microWakeWord)             0.6     4.07         10.12  2.86      106/106
-  Computah v1 (microWakeWord)             0.94    8.33         4.72   4.19      106/106
-  openWakeWord "computer" (community)     0.7     0.93         1.91   1.43      100/106
+Computah v4 (this model, openWakeWord)
+  cutoff  LibriSpeech     AMI meetings    People's Speech   caught    harder test (10/5/0 dB)
+  @0.1    0.37/h ( 2)     2.36/h (21)     0.72/h ( 7)   106/106   291/564 (139/88/64)
+  @0.3    0.37/h ( 2)     1.46/h (13)     0.31/h ( 3)   106/106   266/564 (130/79/57)
+  @0.5    0.19/h ( 1)     1.12/h (10)     0.31/h ( 3)   106/106   252/564 (126/76/50)
+  @0.7    0.19/h ( 1)     1.01/h ( 9)     0.20/h ( 2)   106/106   234/564 (116/71/47)
+  @0.9    0.00/h ( 0)     0.34/h ( 3)     0.10/h ( 1)   106/106   201/564 (102/60/39)
+  @0.95   0.00/h ( 0)     0.22/h ( 2)     0.10/h ( 1)   105/106   178/564 (91/53/34)   (shipped cutoff)
+  @0.97   0.00/h ( 0)     0.11/h ( 1)     0.10/h ( 1)   105/106   152/564 (78/44/30)
 
-"computer" said by the three American held-out voices (12 clips): v3 at 0.9
-wakes on 0, the "computer" model at 0.7 on 11.
+Earlier models on the same sets:
+  model                                 cutoff  LibriSpeech  AMI    People's  caught   harder test
+  Computah v3 (openWakeWord)            0.9     0.00         0.11   0.00      105/106  173/564 (89/51/33)
+  Computah v3 (openWakeWord)            0.95    0.00         0.00   0.00      105/106  146/564 (76/44/26)
+  Computah v2 (microWakeWord)           0.6     4.07         10.12  2.86      106/106
+  Computah v1 (microWakeWord)           0.94    8.33         4.72   4.19      106/106
+  openWakeWord "computer" (community)   0.7     0.93         1.91   1.43      100/106  111/564 (59/29/23)
+
+"computer" said by the three American held-out voices (12 clips): v4 at 0.95
+wakes on 0, v3 at 0.9 on 0, the "computer" model at 0.7 on 11.

@@ -7,19 +7,26 @@ tts_batch_size: 25
 piper_sample_generator_path: /work/scripts/openwakeword/shim
 output_dir: /work/data/oww
 augmentation_batch_size: 16
-augmentation_rounds: 1
+augmentation_rounds: 2
 rir_paths: [/work/data/mit_rirs]
-background_paths: [/work/data/fma_16k]
-background_paths_duplication_rate: [1]
-false_positive_validation_data_path: /work/data/oww/validation_set_features.npy
+# Background clips mixed under the positives: music, speech and noise in
+# about equal parts. Speech and music with vocals matter; music and noise
+# alone cost a third of the catches in noise.
+background_paths: [/work/data/oww/src/musan_by/music/fma, /work/data/oww/src/musan_by/music/fma-western-art, /work/data/oww/src/musan_by/music/hd-classical, /work/data/oww/src/musan_by/music/jamendo, /work/data/oww/src/musan_by/music/rfm, /work/data/oww/src/musan_by/speech/librivox, /work/data/oww/src/musan_by/speech/us-gov, /work/data/oww/src/musan_by/noise/free-sound, /work/data/oww/src/musan_by/noise/sound-bible]
+background_paths_duplication_rate: [3, 3, 3, 3, 3, 2, 2, 1, 1]
+false_positive_validation_data_path: /work/data/oww/neg/validation.npy
 feature_data_files:
-  ACAV100M_sample: /work/data/oww/acav100m_2000h.npy
+  librispeech: /work/data/oww/neg/librispeech.npy
+  musan: /work/data/oww/neg/musan.npy
+  ami: /work/data/oww/neg/ami.npy
 batch_n_per_class:
-  ACAV100M_sample: 1024
+  librispeech: 574
+  musan: 300
+  ami: 150
   adversarial_negative: 50
   positive: 50
 model_type: dnn
 layer_size: 32
 steps: 50000
-max_negative_weight: 500
+max_negative_weight: 1000
 target_false_positives_per_hour: 0.2
