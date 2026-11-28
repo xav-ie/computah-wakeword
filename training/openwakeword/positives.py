@@ -1,17 +1,23 @@
 #!/usr/bin/env python3
-# "computah" candidates from exact phonemes, not spellings: spelled
-# "computah" came out of most voices as "computer". phonescore.py and
-# phonejudge.py screen the candidates afterwards.
-#   positives.py voices OUT_ROOT N   N per training Piper model, into OUT_ROOT/<model>/
-#   positives.py heldout OUT_DIR     300 per held-out voice (bare and "hey")
-#   positives.py fade DIR...         fade and pad clips another generator made
+# "computah" clips from exact phonemes, not spellings: spelled "computah"
+# came out of most voices as "computer".
+#   positives.py heldout_end OUT_DIR  the 5 held-out voices in the approved endings, 240 clips
+#   positives.py heldout OUT_DIR      300 per held-out voice in v3 and v4's "ah" ending,
+#                                     screened afterwards by phonescore.py and phonejudge.py
+#   positives.py voices OUT_ROOT N    N per training Piper model, into OUT_ROOT/<model>/ (v4)
+#   positives.py fade DIR...          fade and pad clips another generator made
 import random, sys, wave
 from multiprocessing import Pool
 from pathlib import Path
 import numpy as np
 from scipy.signal import resample_poly
 
-# Weighted toward the stress patterns whose open "ah" survives most voices
+# The endings a listener with the target accent approved: "tah", "dah"
+# (soft t), "duh" and "taw". Not the long "ah" below (heard as "ta-da") nor
+# a schwa (heard as "computer").
+ENDINGS = {"tah": "kəmpjˈuːtɐ", "dah": "kəmpjˈuːɾɐ", "duh": "kəmpjˈuːɾʌ", "taw": "kəmpjˈuːtɔ"}
+
+# v3 and v4's positives, now only the old held-out set. Weighted toward the stress patterns whose open "ah" survives most voices
 # (phoneme scorer pass rates: com-pew-TAH 26%, com-PEW-tahh 14%, -tˌɑː 8%).
 BARE = ["kəmpjˌuːtˈɑː"] * 5 + ["kəmpjˈuːtɑːh"] * 3 + ["kəmpjˈuːtˌɑː"] * 2
 HEY = ["hˈeɪ " + b for b in BARE]
@@ -54,6 +60,18 @@ if __name__ == "__main__":
         with Pool(12) as pool:
             for s in pool.imap_unordered(train_voice, [(m, root, count) for m in sorted(Path("/work/data/train_voices").glob("*.onnx"))]):
                 print(s, flush=True)
+    elif mode == "heldout_end":
+        from piper import PiperVoice, SynthesisConfig
+        out = Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)
+        for model in sorted(Path("/work/data/heldout_voices").glob("*.onnx")):
+            voice = PiperVoice.load(str(model))
+            for end, ph in ENDINGS.items():
+                for tag, text in (("computah", ph), ("hey_computah", "hˈeɪ " + ph)):
+                    for speed in (0.85, 1.0, 1.2):
+                        for noise in (0.5, 0.8):
+                            write(out / f"{model.stem}_{tag}_{end}_{speed}_{noise}.wav",
+                                  say(voice, text, SynthesisConfig(length_scale=speed, noise_scale=noise)))
+        print("heldout_end", len(list(out.glob("*.wav"))))
     elif mode == "heldout":
         from piper import PiperVoice, SynthesisConfig
         out = Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)

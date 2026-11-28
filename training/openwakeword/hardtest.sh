@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
-# Builds the harder catch test in data/hard: the 106 held-out Piper clips
-# (data/heldout_phonemes, from pipeline.sh) and up to 12 bare and 12 "hey"
-# clips from each of four held-out Kokoro voices that pass the same phoneme
-# screen, each through a real room and into AMI or People's Speech audio at
-# 10, 5 and 0 dB. Needs pipeline.sh, ./download.sh and ../farfield.sh first.
-# Score it as the clean clips are: ../benchmark.py --positives data/hard ...
+# Builds the harder catch tests, each clip through a real room and into AMI
+# or People's Speech audio at 10, 5 and 0 dB:
+#   data/hard_end  the 240 held-out clips in the approved endings
+#                  (data/heldout_end, from pipeline.sh), 720 clips
+#   data/hard      v3 and v4's test: the 106 held-out Piper clips
+#                  (data/heldout_phonemes) and up to 12 bare and 12 "hey" clips
+#                  from each of four held-out Kokoro voices that pass the same
+#                  phoneme screen, 564 clips
+# Needs pipeline.sh, ./download.sh and ../farfield.sh first. Score them as
+# the clean clips are: ../benchmark.py --positives data/hard_end ...
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 podman build -q -t computah-kokoro training/openwakeword/kokoro
@@ -34,7 +38,8 @@ print('kokoro held-out clips:', sum(per.values()))
 EOF
 R=/work/data/oww/src/rirs/RIRS_NOISES/real_rirs_isotropic_noises
 M='/work/data/media/ami_sdm /work/data/media/peoples_dirty'
-rm -rf /work/data/hard
+rm -rf /work/data/hard /work/data/hard_end
+python3 /work/scripts/hardtest.py /work/data/hard_end \$R \$M -- /work/data/heldout_end
 python3 /work/scripts/hardtest.py /work/data/hard/piper \$R \$M -- /work/data/heldout_phonemes
 python3 /work/scripts/hardtest.py /work/data/hard/kokoro \$R \$M -- /work/data/heldout_kokoro
 "

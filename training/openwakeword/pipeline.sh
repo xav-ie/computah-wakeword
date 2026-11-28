@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
-# Trains Computah v4, the openWakeWord model, on an NVIDIA GPU. Run
+# Trains Computah v5, the openWakeWord model, on an NVIDIA GPU. Run
 # ../download.sh and ./download.sh first. Writes into ./data; the model lands
-# in data/oww/computah.tflite and the held-out clips in data/heldout_phonemes.
+# in data/oww/computah.tflite and the held-out clips in data/heldout_end and
+# data/heldout_phonemes.
 #
 #   1. Sound-alikes: ../generate.sh (its LibriTTS half; the spelled
 #      positives it also makes are not used) and negatives_voices.py.
-#   2. "computah" candidates from exact phonemes: both LibriTTS generators
-#      and 20 Piper voice models for training, 5 other voices for testing.
-#   3. phonescore.py transcribes every candidate into phonemes and
-#      select.py keeps those phonejudge.py hears as com-pew-tah with no r.
+#   2. "computah" from exact phonemes in the four approved endings, from
+#      both LibriTTS generators, and the 20 takes in takes/train, 550
+#      copies each. The held-out voices in the approved endings make
+#      data/heldout_end.
+#   3. v3 and v4's held-out set (data/heldout_phonemes, the long "ah"
+#      ending): candidates from the held-out voices, kept when phonescore.py
+#      and phonejudge.py hear com-pew-tah with no r.
 #   4. General negatives and the validation set as openWakeWord features,
 #      from MUSAN (its CC BY and public domain part), LibriSpeech and AMI.
 #   5. openWakeWord augments the clips, computes features and trains;
@@ -20,7 +24,7 @@ podman build -q -t computah-oww training/openwakeword
 exec podman run --rm --device nvidia.com/gpu=all --memory=14g --shm-size=2g \
   -e PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True -e TF_FORCE_GPU_ALLOW_GROWTH=true \
   -e PYTHONPATH=/work/data/piper-sample-generator \
-  -v "$PWD/data:/work/data" -v "$PWD/training:/work/scripts:ro" computah-oww bash -c '
+  -v "$PWD/data:/work/data" -v "$PWD/training:/work/scripts:ro" -v "$PWD/takes:/work/takes:ro" computah-oww bash -c '
 set -euo pipefail
 cd /work
 S=/work/scripts/openwakeword
@@ -37,29 +41,35 @@ find data/v2/neg -name "*.wav" | sort | awk "{n=split(\$0,p,\"/\"); print \$0, (
   done
 python3 $S/negatives_voices.py
 
-# 2. Candidates.
+# 2. Positives.
 gen() { # model tag phonemes count
-  local out=/work/data/cand/lt/${1}_$2
+  local out=/work/data/pos/lt/${1}_$2
   [ -f $out.done ] && return
   rm -rf $out
   python3 -m piper_sample_generator "$3" --phoneme-input --model /work/data/piper-sample-generator/models/$1.pt \
-    --max-samples $4 --batch-size 10 --slerp-weights 0.2 0.5 0.8 --length-scales 0.75 0.9 1.0 1.15 1.3 1.4 \
+    --max-samples $4 --batch-size 10 --slerp-weights 0.2 0.5 0.8 --length-scales 0.75 0.9 1.0 1.15 1.3 \
     --noise-scales 0.5 0.667 0.8 0.9 --noise-scale-ws 0.6 0.8 1.0 --output-dir $out
   python3 $S/positives.py fade $out
   touch $out.done
 }
 for model in en_US-libritts_r-medium en-us-libritts-high; do
-  gen $model TAH1 "kəmpjˌuːtˈɑː" 15000
-  gen $model tahh "kəmpjˈuːtɑːh" 9000
-  gen $model TAH2 "kəmpjˈuːtˌɑː" 6000
-  gen $model heyTAH1 "hˈeɪ kəmpjˌuːtˈɑː" 5000
-  gen $model heytahh "hˈeɪ kəmpjˈuːtɑːh" 3000
-  gen $model heyTAH2 "hˈeɪ kəmpjˈuːtˌɑː" 2000
+  gen $model TAHc "kəmpjˈuːtɐ" 3000
+  gen $model TAHs "kəmpjˈuːɾɐ" 3000
+  gen $model TUHs "kəmpjˈuːɾʌ" 2500
+  gen $model TAWc "kəmpjˈuːtɔ" 2500
+  gen $model heyTAHc "hˈeɪ kəmpjˈuːtɐ" 1500
+  gen $model heyTUHs "hˈeɪ kəmpjˈuːɾʌ" 1500
 done
-[ -f /work/data/cand/pv.done ] || { python3 $S/positives.py voices /work/data/cand/pv 1500; touch /work/data/cand/pv.done; }
-[ -f /work/data/cand/heldout.done ] || { python3 $S/positives.py heldout /work/data/cand/heldout; touch /work/data/cand/heldout.done; }
+i=0
+for f in $(find /work/data/pos/lt -name "*.wav" | sort); do
+  i=$((i + 1)); tag=$(basename $(dirname $f)); split=train; [ $((i % 10)) -eq 0 ] && split=test
+  [ -e $O/positive_$split/p6_${tag}_$(basename $f) ] || ln $f $O/positive_$split/p6_${tag}_$(basename $f)
+done
+python3 $S/takes.py /work/takes/train /work/data/takes_trimmed $O/positive_train 550
+[ -f /work/data/heldout_end.done ] || { python3 $S/positives.py heldout_end /work/data/heldout_end; touch /work/data/heldout_end.done; }
 
-# 3. Screening.
+# 3. The held-out set of v3 and v4.
+[ -f /work/data/cand/heldout.done ] || { python3 $S/positives.py heldout /work/data/cand/heldout; touch /work/data/cand/heldout.done; }
 python3 $S/phonescore.py /work/data/cand > /work/data/cand/scores.tsv
 cd $S && python3 select.py /work/data/cand/scores.tsv && cd /work
 

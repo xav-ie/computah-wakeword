@@ -1,0 +1,63 @@
+file	said	how	peak	loud_ms
+train/normal_001.wav	computah	normal	7175	420
+heldout/normal_002.wav	computah	normal	6886	450
+train/normal_003.wav	computah	normal	8251	370
+heldout/normal_004.wav	computah	normal	8601	350
+train/normal_005.wav	computah	normal	6553	480
+heldout/normal_006.wav	computah	normal	7236	390
+train/hey_001.wav	hey computah	hey	6798	460
+heldout/hey_002.wav	hey computah	hey	7293	480
+train/hey_003.wav	hey computah	hey	6018	460
+heldout/hey_004.wav	hey computah	hey	7901	440
+train/hey_005.wav	hey computah	hey	7552	480
+train/fast_001.wav	computah	fast	6111	310
+heldout/fast_002.wav	computah	fast	4803	480
+train/fast_003.wav	computah	fast	6443	340
+heldout/fast_004.wav	computah	fast	7879	300
+train/fast_005.wav	computah	fast	4502	290
+train/slow_001.wav	computah	slow	7231	590
+heldout/slow_002.wav	computah	slow	7453	630
+train/slow_003.wav	computah	slow	6124	830
+heldout/slow_004.wav	computah	slow	6023	450
+train/quiet_001.wav	computah	quiet	940	40
+heldout/quiet_002.wav	computah	quiet	1959	310
+train/quiet_003.wav	computah	quiet	1021	30
+heldout/quiet_004.wav	computah	quiet	3472	1570
+train/loud_001.wav	computah	loud	4631	1540
+heldout/loud_002.wav	computah	loud	7028	1120
+train/loud_003.wav	computah	loud	5382	370
+heldout/loud_004.wav	computah	loud	4533	650
+train/far_001.wav	computah	far	4086	360
+heldout/far_002.wav	computah	far	3957	320
+train/far_003.wav	computah	far	5574	310
+heldout/far_004.wav	computah	far	4335	290
+train/far_005.wav	computah	far	5666	610
+sentence/sentence_001.wav	computah, what time is it	sentence	5477	750
+sentence/sentence_002.wav	computah, what time is it	sentence	4516	760
+sentence/sentence_003.wav	computah, what time is it	sentence	6943	1030
+train/tired_001.wav	computah	tired	7169	370
+heldout/tired_002.wav	computah	tired	7710	310
+train/tired_003.wav	computah	tired	4254	310
+not/computer_001.wav	computer	computer	6582	340
+not/computer_002.wav	computer	computer	6899	460
+not/computer_003.wav	computer	computer	7110	430
+not/computer_004.wav	computer	computer	6940	390
+not/my_computer_001.wav	my computer is slow	my_computer	7845	870
+not/my_computer_002.wav	my computer is slow	my_computer	10376	840
+not/my_computer_003.wav	my computer is slow	my_computer	8213	890
+not/commuter_001.wav	commuter	commuter	8645	450
+not/commuter_002.wav	commuter	commuter	6944	440
+not/compute_001.wav	compute	compute	5296	270
+not/compute_002.wav	compute	compute	5184	330
+not/come_to_001.wav	come to the table	come_to	7062	680
+not/come_to_002.wav	come to the table	come_to	7516	1190
+not/jupiter_001.wav	Jupiter	jupiter	5125	430
+not/jupiter_002.wav	Jupiter	jupiter	5062	390
+not/potato_001.wav	potato	potato	7647	430
+not/potato_002.wav	potato	potato	7666	330
+not/chatter_001.wav	anything you like	chatter	4893	680
+not/chatter_002.wav	anything you like	chatter	10821	810
+not/chatter_003.wav	anything you like	chatter	8127	940
+not/chatter_004.wav	anything you like	chatter	8869	800
+not/silence_001.wav	(nothing)	silence	651	0
+not/silence_002.wav	(nothing)	silence	551	0

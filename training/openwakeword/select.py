@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-# Keeps the candidates phonejudge.py passes (heard as com-pew-tah, no r):
-# training positives into openWakeWord's clip folders, every 10th to test, at
-# most 600 per Piper voice model and 2000 per LibriTTS folder; and up to 12
-# bare and 12 "hey" clips per held-out voice into heldout_phonemes.
+# Keeps the candidates phonejudge.py passes (heard as com-pew-tah, no r).
+# Up to 12 bare and 12 "hey" clips per held-out voice go into
+# heldout_phonemes. Training candidates, if data/cand has any (v4 trained on
+# them; v5 does not), go into openWakeWord's clip folders, every 10th to
+# test, at most 600 per Piper voice model and 2000 per LibriTTS folder.
 #   select.py SCORES.tsv   (phonescore.py's output over data/cand)
 import shutil, sys
 from collections import defaultdict
